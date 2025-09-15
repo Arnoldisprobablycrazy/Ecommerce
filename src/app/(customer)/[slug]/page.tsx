@@ -3,16 +3,15 @@ import ProductImages from "@/components/ProductImages";
 import { notFound } from "next/navigation";
 import supabase from "@/lib/supabase";
 
-// Use type assertion to bypass the conflicting type definition
-const SinglePage = async (props: { params: unknown }) => {
-  // Assert that params is actually { slug: string }
-  const params = props.params as { slug: string };
+const SinglePage = async ({ params }: { params: Promise<{ slug: string }> }) => {
+  // Await the params to get the actual values
+  const { slug } = await params;
   
   // Fetch product by slug from Supabase
   const { data: product, error } = await supabase
     .from("Products")
     .select("*")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .single();
 
   if (error || !product) return notFound();
