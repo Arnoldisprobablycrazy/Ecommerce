@@ -1,17 +1,10 @@
+
 import CustomizeProducts from "@/components/CustomizeProducts";
 import ProductImages from "@/components/ProductImages";
 import { notFound } from "next/navigation";
 import supabase from "@/lib/supabase";
 
-export const dynamic = "force-dynamic"; // ✅ always fetch latest
-
-interface PageProps {
-  params: {
-    slug: string;
-  };
-}
-
-const SinglePage = async ({ params }: PageProps) => {
+const SinglePage = async ({ params }: { params: { slug: string } }) => {
   // Fetch product by slug from Supabase
   const { data: product, error } = await supabase
     .from("Products")
@@ -27,7 +20,6 @@ const SinglePage = async ({ params }: PageProps) => {
       <div className="w-full lg:w-1/2 lg:sticky top-20 h-max">
         <ProductImages items={product.images || [product.image]} />
       </div>
-
       {/* TEXTS */}
       <div className="w-full lg:w-1/2 flex flex-col gap-6">
         <h1 className="text-4xl font-medium">{product.name}</h1>
@@ -35,10 +27,11 @@ const SinglePage = async ({ params }: PageProps) => {
         <div className="h-[2px] bg-gray-100" />
         <h2 className="font-medium text-2xl">KSH{product.price}</h2>
         <div className="h-[2px] bg-gray-100" />
+       
+        <div className="h-[2px] bg-gray-100" />
       </div>
     </div>
   );
 };
 
 export default SinglePage;
-
