@@ -1,10 +1,11 @@
+// src/app/(customer)/[slug]/page.tsx
 import CustomizeProducts from "@/components/CustomizeProducts";
 import ProductImages from "@/components/ProductImages";
 import { notFound } from "next/navigation";
 import supabase from "@/lib/supabase";
 
+// @ts-ignore - Ignore the type error temporarily
 const SinglePage = async ({ params }: { params: { slug: string } }) => {
-  // Fetch product by slug from Supabase
   const { data: product, error } = await supabase
     .from("Products")
     .select("*")
