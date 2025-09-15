@@ -1,5 +1,5 @@
 // src/app/(customer)/[slug]/page.tsx
-import CustomizeProducts from "@/components/CustomizeProducts";
+
 import ProductImages from "@/components/ProductImages";
 import { notFound } from "next/navigation";
 import supabase from "@/lib/supabase";
