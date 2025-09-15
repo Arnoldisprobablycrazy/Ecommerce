@@ -1,42 +1,45 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+// eslint.config.js
 import js from "@eslint/js";
+import nextPlugin from "@next/eslint-plugin-next";
+import typescriptPlugin from "@typescript-eslint/eslint-plugin";
+import typescriptParser from "@typescript-eslint/parser";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-const eslintConfig = [
-  // Base Next.js configs
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
-  
-  // Custom rules and disables
+/** @type {import('eslint').Linter.Config[]} */
+export default [
+  js.configs.recommended,
   {
+    files: ["**/*.ts", "**/*.tsx"],
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+    plugins: {
+      "@typescript-eslint": typescriptPlugin,
+      "@next/next": nextPlugin,
+    },
     rules: {
-      // Disable specific rules globally
+      // Disable specific rules
       "@typescript-eslint/no-unused-vars": "off",
+      "@next/next/no-img-element": "off",
       "react-hooks/exhaustive-deps": "warn",
       
-      // Or use different severity levels
-      "no-console": "warn",
+      // Enable rules
+      "@next/next/no-html-link-for-pages": "error",
       
-      // Next.js specific rule disabling
-      "@next/next/no-img-element": "off",
+      // Custom rules
+      "no-console": "warn",
     },
   },
-  
-  // You can also create specific configs for different file types
   {
-    files: ["**/*.test.ts", "**/*.test.tsx"],
+    files: ["**/*.js", "**/*.jsx"],
     rules: {
-      // Disable rules only for test files
-      "@typescript-eslint/no-explicit-any": "off",
+      // JavaScript specific rules
     },
   },
 ];
-
-export default eslintConfig;
