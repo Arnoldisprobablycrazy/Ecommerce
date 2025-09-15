@@ -3,17 +3,12 @@ import ProductImages from "@/components/ProductImages";
 import { notFound } from "next/navigation";
 import supabase from "@/lib/supabase";
 
-// Use a more flexible approach
-const SinglePage = async (props: any) => {
-  // Extract params from props with type safety
-  const params = props.params as { slug: string };
-  const { slug } = params;
-  
+const SinglePage = async ({ params }: { params: { slug: string } }) => {
   // Fetch product by slug from Supabase
   const { data: product, error } = await supabase
     .from("Products")
     .select("*")
-    .eq("slug", slug)
+    .eq("slug", params.slug)
     .single();
 
   if (error || !product) return notFound();
