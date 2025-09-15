@@ -3,9 +3,10 @@ import ProductImages from "@/components/ProductImages";
 import { notFound } from "next/navigation";
 import supabase from "@/lib/supabase";
 
-const SinglePage = async ({ params }: { params: Promise<{ slug: string }> }) => {
-  // Await the params to get the actual values
-  const { slug } = await params;
+// Use the global PageProps type that Next.js provides
+const SinglePage = async (props: PageProps<"/[slug]">) => {
+  // Await the params
+  const { slug } = await props.params;
   
   // Fetch product by slug from Supabase
   const { data: product, error } = await supabase
