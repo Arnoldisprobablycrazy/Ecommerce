@@ -1,25 +1,31 @@
 // eslint.config.js
-import js from "@eslint/js";
-import nextPlugin from "@next/eslint-plugin-next";
+import next from "@next/eslint-plugin-next";
 import typescriptPlugin from "@typescript-eslint/eslint-plugin";
 import typescriptParser from "@typescript-eslint/parser";
-import reactHooksPlugin from "eslint-plugin-react-hooks";
+import reactHooks from "eslint-plugin-react-hooks";
 
-/** @type {import('eslint').Linter.Config[]} */
 export default [
-  js.configs.recommended,
   {
-    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
     plugins: {
-      "@next/next": nextPlugin,
-      "react-hooks": reactHooksPlugin,
+      "@next/next": next,
+      "@typescript-eslint": typescriptPlugin,
+      "react-hooks": reactHooks,
     },
     rules: {
-      "@next/next/no-img-element": "off",
+      // Next.js rules
       "@next/next/no-html-link-for-pages": "error",
+      "@next/next/no-img-element": "off",
+      
+      // TypeScript rules
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
+      
+      // React Hooks rules
       "react-hooks/exhaustive-deps": "warn",
       "react-hooks/rules-of-hooks": "error",
-      "no-console": ["warn", { "allow": ["warn", "error"] }],
+      
+      // General rules
+      "no-console": "warn",
     },
   },
   {
@@ -33,24 +39,6 @@ export default [
           jsx: true,
         },
       },
-    },
-    plugins: {
-      "@typescript-eslint": typescriptPlugin,
-    },
-    rules: {
-      "@typescript-eslint/no-unused-vars": ["warn", { 
-        "argsIgnorePattern": "^_",
-        "varsIgnorePattern": "^_",
-        "caughtErrorsIgnorePattern": "^_"
-      }],
-      // CHANGE: Set to "off" instead of "warn" for deployment
-      "@typescript-eslint/no-explicit-any": "off",
-    },
-  },
-  {
-    files: ["**/*.js", "**/*.jsx"],
-    rules: {
-      "no-unused-vars": "warn",
     },
   },
 ];
