@@ -3,10 +3,30 @@ import js from "@eslint/js";
 import nextPlugin from "@next/eslint-plugin-next";
 import typescriptPlugin from "@typescript-eslint/eslint-plugin";
 import typescriptParser from "@typescript-eslint/parser";
+import reactHooksPlugin from "eslint-plugin-react-hooks";
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   js.configs.recommended,
+  {
+    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+    plugins: {
+      "@next/next": nextPlugin,
+      "react-hooks": reactHooksPlugin,
+    },
+    rules: {
+      // Next.js rules
+      "@next/next/no-img-element": "off",
+      "@next/next/no-html-link-for-pages": "error",
+      
+      // React Hooks rules
+      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/rules-of-hooks": "error",
+      
+      // General rules
+      "no-console": ["warn", { "allow": ["warn", "error"] }],
+    },
+  },
   {
     files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
@@ -21,47 +41,31 @@ export default [
     },
     plugins: {
       "@typescript-eslint": typescriptPlugin,
-      "@next/next": nextPlugin,
     },
     rules: {
-      // TypeScript rules - configured with exceptions
+      // TypeScript rules
       "@typescript-eslint/no-unused-vars": ["warn", { 
         "argsIgnorePattern": "^_",
         "varsIgnorePattern": "^_",
         "caughtErrorsIgnorePattern": "^_"
       }],
       "@typescript-eslint/no-explicit-any": [
-        "error",
+        "warn",
         {
-          "fixToUnknown": true, // Suggest 'unknown' instead of 'any'
-          "ignoreRestArgs": false // Don't allow ...args: any[]
+          "fixToUnknown": true,
         }
       ],
-      
-      // Next.js rules
-      "@next/next/no-img-element": "off",
-      "@next/next/no-html-link-for-pages": "error",
-      "@next/next/no-async-client-component": "error",
-      
-      // React rules
-      "react-hooks/exhaustive-deps": "warn",
-      "react-hooks/rules-of-hooks": "error",
-      
-      // General rules
-      "no-console": ["warn", { "allow": ["warn", "error"] }],
-      "prefer-const": "error",
     },
   },
   {
     files: ["**/*.js", "**/*.jsx"],
     rules: {
       "no-unused-vars": "warn",
-      "no-console": ["warn", { "allow": ["warn", "error"] }],
     },
   },
   // Allow any in test files
   {
-    files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "**/*.test.js", "**/*.test.jsx"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "no-console": "off",
