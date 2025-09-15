@@ -3,18 +3,17 @@ import ProductImages from "@/components/ProductImages";
 import { notFound } from "next/navigation";
 import supabase from "@/lib/supabase";
 
-interface SinglePageProps {
-  params: {
-    slug: string;
-  };
-}
-
-const SinglePage = async ({ params }: SinglePageProps) => {
+// Use a more flexible approach
+const SinglePage = async (props: any) => {
+  // Extract params from props with type safety
+  const params = props.params as { slug: string };
+  const { slug } = params;
+  
   // Fetch product by slug from Supabase
   const { data: product, error } = await supabase
     .from("Products")
     .select("*")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .single();
 
   if (error || !product) return notFound();
@@ -30,7 +29,9 @@ const SinglePage = async ({ params }: SinglePageProps) => {
         <h1 className="text-4xl font-medium">{product.name}</h1>
         <p className="text-gray-500">{product.description}</p>
         <div className="h-[2px] bg-gray-100" />
-        <h2 className="font-medium text-2xl">KSH {product.price}</h2>
+        <h2 className="font-medium text-2xl">KSH{product.price}</h2>
+        <div className="h-[2px] bg-gray-100" />
+       
         <div className="h-[2px] bg-gray-100" />
       </div>
     </div>
