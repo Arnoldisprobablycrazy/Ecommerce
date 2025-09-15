@@ -1,78 +1,42 @@
-// app/page.tsx (Server Component – no "use client")
-import Categories from "@/components/Categories";
-import Hero from "@/components/Hero";
-import RandomProducts from "@/components/RandomProducts";  // ✅ import here
-import { Suspense } from "react";
+import { notFound } from "next/navigation";
 import supabase from "@/lib/supabase";
-import Link from "next/link";
+import CustomizeProducts from "@/components/CustomizeProducts";
+import ProductImages from "@/components/ProductImages";
 
-export default async function Home() {
-  const { data } = await supabase
-    .from("Categories")
+export const dynamic = "force-dynamic"; // always fetch latest data
+
+interface PageProps {
+  params: {
+    slug: string;
+  };
+}
+
+const SinglePage = async ({ params }: PageProps) => {
+  const { data: product, error } = await supabase
+    .from("Products")
     .select("*")
-    .order("name");
+    .eq("slug", params.slug)
+    .single();
 
-  const categories = data ?? [];
+  if (error || !product) return notFound();
 
   return (
-    <div className="space-y-9 container mx-auto px-4">
-      {/* Hero Section - Full Width */}
-      <div className="w-full">
-        <Hero />
+    <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative flex flex-col lg:flex-row gap-16">
+      {/* IMAGE */}
+      <div className="w-full lg:w-1/2 lg:sticky top-20 h-max">
+        <ProductImages items={product.images || [product.image]} />
       </div>
 
-      {/* Categories Section - Below Hero */}
-      <div className="container mx-auto px-4">
-        <Suspense
-          fallback={
-            <div className="flex justify-center">
-              <div className="animate-pulse bg-gray-200 rounded-lg w-full max-w-4xl h-40"></div>
-            </div>
-          }
-        >
-          <div className="flex justify-center">
-            <Categories categories={categories} />
-          </div>
-        </Suspense>
-      </div>
-
-      {/* Featured Products Section (now showing random products) */}
-      <div className="container mx-auto px-4 mt-12">
-        <div className="mb-8 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-            Featured Products
-          </h2>
-          <p className="text-gray-600 mt-2">
-            Various selections just for you
-          </p>
-        </div>
-
-        <Suspense
-          fallback={
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="animate-pulse bg-gray-200 rounded-lg h-80"
-                ></div>
-              ))}
-            </div>
-          }
-        >
-          {/* ✅ Instead of ProductList, use RandomProducts */}
-          <RandomProducts limit={8} />
-        </Suspense>
-
-        {/* View All Button */}
-        <div className="text-center mt-8">
-          <Link
-            href="/products"
-            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            View All Products
-          </Link>
-        </div>
+      {/* TEXTS */}
+      <div className="w-full lg:w-1/2 flex flex-col gap-6">
+        <h1 className="text-4xl font-medium">{product.name}</h1>
+        <p className="text-gray-500">{product.description}</p>
+        <div className="h-[2px] bg-gray-100" />
+        <h2 className="font-medium text-2xl">KSH{product.price}</h2>
+        <div className="h-[2px] bg-gray-100" />
       </div>
     </div>
   );
-}
+};
+
+export default SinglePage;
