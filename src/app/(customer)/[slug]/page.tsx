@@ -1,10 +1,13 @@
-
 import CustomizeProducts from "@/components/CustomizeProducts";
 import ProductImages from "@/components/ProductImages";
 import { notFound } from "next/navigation";
 import supabase from "@/lib/supabase";
 
-const SinglePage = async ({ params }: { params: { slug: string } }) => {
+// Use type assertion to bypass the conflicting type definition
+const SinglePage = async (props: { params: unknown }) => {
+  // Assert that params is actually { slug: string }
+  const params = props.params as { slug: string };
+  
   // Fetch product by slug from Supabase
   const { data: product, error } = await supabase
     .from("Products")
