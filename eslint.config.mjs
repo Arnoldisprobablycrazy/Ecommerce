@@ -24,22 +24,47 @@ export default [
       "@next/next": nextPlugin,
     },
     rules: {
-      // Disable specific rules
-      "@typescript-eslint/no-unused-vars": "off",
+      // TypeScript rules - configured with exceptions
+      "@typescript-eslint/no-unused-vars": ["warn", { 
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }],
+      "@typescript-eslint/no-explicit-any": [
+        "error",
+        {
+          "fixToUnknown": true, // Suggest 'unknown' instead of 'any'
+          "ignoreRestArgs": false // Don't allow ...args: any[]
+        }
+      ],
+      
+      // Next.js rules
       "@next/next/no-img-element": "off",
-      "react-hooks/exhaustive-deps": "warn",
-      
-      // Enable rules
       "@next/next/no-html-link-for-pages": "error",
+      "@next/next/no-async-client-component": "error",
       
-      // Custom rules
-      "no-console": "warn",
+      // React rules
+      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/rules-of-hooks": "error",
+      
+      // General rules
+      "no-console": ["warn", { "allow": ["warn", "error"] }],
+      "prefer-const": "error",
     },
   },
   {
     files: ["**/*.js", "**/*.jsx"],
     rules: {
-      // JavaScript specific rules
+      "no-unused-vars": "warn",
+      "no-console": ["warn", { "allow": ["warn", "error"] }],
+    },
+  },
+  // Allow any in test files
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "no-console": "off",
     },
   },
 ];
