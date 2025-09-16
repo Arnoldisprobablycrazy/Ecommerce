@@ -106,7 +106,6 @@ const ChartTooltip = RechartsPrimitive.Tooltip
 
 function ChartTooltipContent({
   active,
-   // @ts-ignore - Recharts payload type issue
   payload,
   className,
   indicator = "dot",
@@ -119,17 +118,18 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
-}: 
-
-React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
   React.ComponentProps<"div"> & {
     hideLabel?: boolean
     hideIndicator?: boolean
     indicator?: "line" | "dot" | "dashed"
     nameKey?: string
     labelKey?: string
-
-    
+    // Add proper typing for Recharts properties
+    payload?: any[] | undefined
+    label?: string | number | undefined
+    labelFormatter?: (value: any, payload: any[]) => React.ReactNode
+    formatter?: (value: any, name: any, props: any) => React.ReactNode
   }) {
   const { config } = useChart()
 
@@ -187,7 +187,7 @@ React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
         {payload.map((item, index) => {
           const key = `${nameKey || item.name || item.dataKey || "value"}`
           const itemConfig = getPayloadConfigFromPayload(config, item, key)
-          const indicatorColor = color || item.payload.fill || item.color
+          const indicatorColor = color || item.payload?.fill || item.color
 
           return (
             <div
@@ -261,11 +261,13 @@ function ChartLegendContent({
   payload,
   verticalAlign = "bottom",
   nameKey,
-}: React.ComponentProps<"div"> &
-  Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
-    hideIcon?: boolean
-    nameKey?: string
-  }) {
+}: {
+  className?: string;
+  hideIcon?: boolean;
+  payload?: any[];
+  verticalAlign?: "top" | "bottom" | "middle";
+  nameKey?: string;
+}) {
   const { config } = useChart()
 
   if (!payload?.length) {
