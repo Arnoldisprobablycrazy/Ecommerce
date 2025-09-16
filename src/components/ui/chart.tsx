@@ -106,6 +106,7 @@ const ChartTooltip = RechartsPrimitive.Tooltip
 
 function ChartTooltipContent({
   active,
+   // @ts-ignore - Recharts payload type issue
   payload,
   className,
   indicator = "dot",
@@ -118,13 +119,17 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
-}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+}: 
+
+React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
   React.ComponentProps<"div"> & {
     hideLabel?: boolean
     hideIndicator?: boolean
     indicator?: "line" | "dot" | "dashed"
     nameKey?: string
     labelKey?: string
+
+    
   }) {
   const { config } = useChart()
 
