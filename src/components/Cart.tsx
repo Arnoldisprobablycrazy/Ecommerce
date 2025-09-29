@@ -5,14 +5,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { X, Plus, Minus, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
 const Cart = () => {
   const { items, isOpen, closeCart, updateQuantity, removeItem, getTotalPrice, getTotalItems } = useCartStore();
+  const [isMounted, setIsMounted] = useState(false);
 
-  if (!isOpen) return null;
+  // Prevent hydration by only rendering after mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isOpen || !isMounted) return null;
 
   return (
     <div className="absolute right-4 top-16 z-50 w-80 sm:w-96 bg-white border border-gray-200 rounded-xl shadow-xl flex flex-col">
+      {/* Rest of your cart component remains the same */}
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <h2 className="text-lg font-semibold">Cart ({getTotalItems()})</h2>

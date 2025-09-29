@@ -1,6 +1,5 @@
 "use client"
-
-import { FormEvent, useState, useRef, ChangeEvent } from 'react'
+import { FormEvent, useState, useRef, ChangeEvent, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,27 +25,72 @@ interface Categories {
 
 interface AddCategoryProps {
   onCategoryAdded?: () => void,
-  form: Categories,
-  setForm: React.Dispatch<React.SetStateAction<Categories>>,
+  editCategory?: Categories | null,
   editId: string | null,
-  setEditId: React.Dispatch<React.SetStateAction<string | null>>,
   onCancel?: () => void,
-  isEditing?: boolean,
+  isLoading?: boolean,
 }
 
-export default function AddCategory({ onCategoryAdded, form, setForm, editId, setEditId, onCancel, isEditing }: AddCategoryProps) {
-  const [isLoading, setIsLoading] = useState(false)
+export default function AddCategory({ onCategoryAdded, editCategory, editId, onCancel, isLoading }: AddCategoryProps) {
+  const [form, setForm] = useState<Categories>({ 
+    name: '', 
+    description: '', 
+    productCount: '', 
+    status: 'Active',
+    image: null 
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
   const [activeTab, setActiveTab] = useState('upload')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
-  function generateSlug(name: string) {
-    return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-  }
+  // Generate unique IDs for form elements
+  const nameId = 'category-name'
+  const descriptionId = 'category-description'
+  const productCountId = 'category-product-count'
+  const statusId = 'category-status'
+  const imageUploadId = 'category-image-upload'
+  const imageUrlId = 'category-image-url'
 
-  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+  // Load edit data when editCategory changes - optimized
+  useEffect(() => {
+    if (editCategory && editId) {
+      // Directly set form data without any delays
+      setForm({
+        id: editCategory.id,
+        name: editCategory.name || '',
+        description: editCategory.description || '',
+        productCount: editCategory.productCount || '',
+        status: editCategory.status || 'Active',
+        image: editCategory.image || null,
+        slug: editCategory.slug || '',
+      });
+    } else {
+      // Reset form when not editing
+      setForm({ 
+        name: '', 
+        description: '', 
+        productCount: '', 
+        status: 'Active',
+        image: null 
+      });
+    }
+  }, [editCategory, editId])
+
+  // Reset image URL when form changes
+  useEffect(() => {
+    if (editId && form.image) {
+      setImageUrl('')
+    }
+  }, [editId, form.image])
+
+  const generateSlug = useCallback((name: string) => {
+    return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+  }, [])
+
+  const handleImageUpload = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     try {
       const file = event.target.files?.[0]
       if (!file) return
@@ -100,9 +144,9 @@ export default function AddCategory({ onCategoryAdded, form, setForm, editId, se
         fileInputRef.current.value = ''
       }
     }
-  }
+  }, [])
 
-  const handleUrlUpload = () => {
+  const handleUrlUpload = useCallback(() => {
     if (!imageUrl.trim()) {
       toast.error('Please enter an image URL')
       return
@@ -117,9 +161,9 @@ export default function AddCategory({ onCategoryAdded, form, setForm, editId, se
     } catch (error) {
       toast.error('Please enter a valid URL')
     }
-  }
+  }, [imageUrl])
 
-  const removeImage = async () => {
+  const removeImage = useCallback(async () => {
     if (form.image && form.image.includes('supabase.co/storage/v1/object/public/categories/')) {
       // Extract file path from Supabase URL
       const urlParts = form.image.split('/')
@@ -141,19 +185,25 @@ export default function AddCategory({ onCategoryAdded, form, setForm, editId, se
     
     setForm(prev => ({ ...prev, image: null }))
     toast.success('Image removed')
-  }
+  }, [form.image])
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const handleSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setIsLoading(true)
+    
+    if (!form.name.trim()) {
+      toast.error('Category name is required')
+      return
+    }
+
+    setIsSubmitting(true)
     
     try {
       let error
       let slug = form.slug || generateSlug(form.name)
       
       const categoryData = {
-        name: form.name,
-        description: form.description,
+        name: form.name.trim(),
+        description: form.description.trim(),
         productCount: form.productCount,
         status: form.status,
         slug,
@@ -162,10 +212,17 @@ export default function AddCategory({ onCategoryAdded, form, setForm, editId, se
 
       if (editId) {
         // Update category
-        ({ error } = await supabase.from("Categories").update(categoryData).eq('id', editId))
+        const { error: updateError } = await supabase
+          .from("Categories")
+          .update(categoryData)
+          .eq('id', editId)
+        error = updateError
       } else {
         // Insert new category
-        const { data, error: insertError } = await supabase.from("Categories").insert([categoryData]).select()
+        const { data, error: insertError } = await supabase
+          .from("Categories")
+          .insert([categoryData])
+          .select()
         error = insertError
         
         if (!error && data && data[0]?.slug) {
@@ -175,29 +232,29 @@ export default function AddCategory({ onCategoryAdded, form, setForm, editId, se
       }
       
       if (error) {
-        toast.error(`Failed to ${editId ? 'update' : 'create'}: ${error.message}`)
-      } else {
-        toast.success(`${editId ? 'Updated' : 'Created'} successfully`)
-        // Reset form and editId
-        setForm({ name: '', description: '', productCount: '', status: 'Active', image: null })
-        setEditId(null)
-        setImageUrl('')
-        // Refresh the categories list
-        if (onCategoryAdded) {
-          onCategoryAdded()
-        }
+        throw error
       }
-    } catch (error) {
-      toast.error(`An unexpected error occurred`)
-      console.error('Error:', error)
+      
+      toast.success(`Category ${editId ? 'updated' : 'created'} successfully`)
+      
+      // Reset form
+      setForm({ name: '', description: '', productCount: '', status: 'Active', image: null })
+      setImageUrl('')
+      
+      if (onCategoryAdded) {
+        onCategoryAdded()
+      }
+    } catch (error: any) {
+      console.error('Error saving category:', error)
+      toast.error(`Failed to ${editId ? 'update' : 'create'} category: ${error.message}`)
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false)
     }
-  }
+  }, [form, editId, generateSlug, onCategoryAdded, router])
 
-  const handleInputChange = (field: keyof Categories, value: string) => {
+  const handleInputChange = useCallback((field: keyof Categories, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }))
-  }
+  }, [])
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -211,7 +268,7 @@ export default function AddCategory({ onCategoryAdded, form, setForm, editId, se
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Image Upload Section */}
           <div className="space-y-2">
-            <Label htmlFor="image">Category Image</Label>
+            <Label htmlFor={imageUploadId}>Category Image</Label>
             
             {/* Image Preview */}
             {form.image ? (
@@ -235,6 +292,7 @@ export default function AddCategory({ onCategoryAdded, form, setForm, editId, se
                   onClick={removeImage}
                   className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-80 hover:opacity-100 transition-opacity"
                   aria-label="Remove image"
+                  disabled={isSubmitting || isUploading}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -250,25 +308,25 @@ export default function AddCategory({ onCategoryAdded, form, setForm, editId, se
                   <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
                     <ImageIcon className="mx-auto h-8 w-8 text-gray-400 mb-2" />
                     <p className="text-sm text-gray-600 mb-2">Upload a category image</p>
-                    <Label htmlFor="image-upload" className="cursor-pointer">
+                    <Label htmlFor={imageUploadId} className="cursor-pointer">
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        disabled={isUploading}
+                        disabled={isUploading || isSubmitting}
                         className="flex items-center gap-2 mx-auto"
                       >
                         <Upload className="h-4 w-4" />
                         {isUploading ? 'Uploading...' : 'Choose Image'}
                       </Button>
                       <Input
-                        id="image-upload"
+                        id={imageUploadId}
                         ref={fileInputRef}
                         type="file"
                         accept="image/*"
                         onChange={handleImageUpload}
                         className="hidden"
-                        disabled={isUploading}
+                        disabled={isUploading || isSubmitting}
                       />
                     </Label>
                     <p className="text-xs text-gray-500 mt-2">PNG, JPG, GIF up to 5MB</p>
@@ -277,17 +335,20 @@ export default function AddCategory({ onCategoryAdded, form, setForm, editId, se
                 
                 <TabsContent value="url" className="space-y-2">
                   <div className="space-y-2">
+                    <Label htmlFor={imageUrlId}>Image URL</Label>
                     <div className="flex gap-2">
                       <Input
+                        id={imageUrlId}
                         placeholder="Paste image URL"
                         value={imageUrl}
                         onChange={(e) => setImageUrl(e.target.value)}
                         className="flex-1"
+                        disabled={isSubmitting}
                       />
                       <Button
                         type="button"
                         onClick={handleUrlUpload}
-                        disabled={!imageUrl.trim()}
+                        disabled={!imageUrl.trim() || isSubmitting}
                         className="flex items-center gap-2"
                       >
                         <LinkIcon className="h-4 w-4" />
@@ -302,50 +363,50 @@ export default function AddCategory({ onCategoryAdded, form, setForm, editId, se
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Category Name *</Label>
+            <Label htmlFor={nameId}>Category Name *</Label>
             <Input
-              id="name"
+              id={nameId}
               type="text"
               placeholder="Enter category name"
               value={form.name}
               onChange={(event) => handleInputChange('name', event.target.value)}
               required
-              disabled={isLoading || isEditing}
+              disabled={isSubmitting || isLoading}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor={descriptionId}>Description</Label>
             <Textarea
-              id="description"
+              id={descriptionId}
               placeholder="Enter category description (optional)"
               value={form.description}
               onChange={(event) => handleInputChange('description', event.target.value)}
               rows={3}
-              disabled={isLoading || isEditing}
+              disabled={isSubmitting || isLoading}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="productCount">Product Count</Label>
+            <Label htmlFor={productCountId}>Product Count</Label>
             <Input
-              id="productCount"
+              id={productCountId}
               type="number"
               placeholder="Enter number of products"
               value={form.productCount}
               onChange={(event) => handleInputChange('productCount', event.target.value)}
-              disabled={isLoading || isEditing}
+              disabled={isSubmitting || isLoading}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor={statusId}>Status</Label>
             <Select
               value={form.status}
               onValueChange={(value) => handleInputChange('status', value)}
-              disabled={isLoading || isEditing}
+              disabled={isSubmitting || isLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger id={statusId}>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
@@ -359,9 +420,9 @@ export default function AddCategory({ onCategoryAdded, form, setForm, editId, se
             <Button 
               type="submit" 
               className="flex-1" 
-              disabled={isLoading || !form.name.trim() || isUploading}
+              disabled={isSubmitting || !form.name.trim() || isUploading || isLoading}
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   {editId ? "Updating..." : "Creating..."}
@@ -376,7 +437,7 @@ export default function AddCategory({ onCategoryAdded, form, setForm, editId, se
                 type="button" 
                 variant="outline"
                 onClick={onCancel}
-                disabled={isLoading || isUploading}
+                disabled={isSubmitting || isUploading || isLoading}
               >
                 Cancel
               </Button>
