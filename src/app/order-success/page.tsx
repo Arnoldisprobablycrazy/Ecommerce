@@ -8,9 +8,12 @@ import { useSearchParams } from "next/navigation";
 
 export default function OrderSuccessPage() {
   const [orderNumber, setOrderNumber] = useState("");
+  const [isClient, setIsClient] = useState(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    setIsClient(true);
+    
     // Get order number from URL params or localStorage
     const urlOrderNumber = searchParams.get('order');
     const savedOrder = localStorage.getItem('currentOrder');
@@ -18,15 +21,21 @@ export default function OrderSuccessPage() {
     if (urlOrderNumber) {
       setOrderNumber(urlOrderNumber);
     } else if (savedOrder) {
-      const orderData = JSON.parse(savedOrder);
-      setOrderNumber(orderData.orderNumber);
-      localStorage.removeItem('currentOrder');
+      try {
+        const orderData = JSON.parse(savedOrder);
+        setOrderNumber(orderData.orderNumber);
+        localStorage.removeItem('currentOrder');
+      } catch (error) {
+        console.error('Error parsing saved order:', error);
+      }
     }
   }, [searchParams]);
 
   const generateReceipt = () => {
+    if (!orderNumber) return;
+    
     const receiptContent = `
-EASTERLY KITCHENS - ORDER CONFIRMATION
+ZUKIH TRADERS - ORDER CONFIRMATION
 ====================================
 
 Thank you for your order!
@@ -39,7 +48,7 @@ Your order has been received and is being processed.
 You can view detailed order information and download
 a complete receipt from your Orders page.
 
-Thank you for choosing Easterly Kitchens!
+Thank you for choosing Zukih Traders!
 ====================================
     `;
 
@@ -53,6 +62,17 @@ Thank you for choosing Easterly Kitchens!
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+
+  // Show loading state during SSR/build
+  if (!isClient) {
+    return (
+      <div className="container mx-auto px-4 py-16 max-w-2xl text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-600 mx-auto mb-6"></div>
+        <h1 className="text-3xl font-bold mb-4">Loading...</h1>
+        <p className="text-gray-600">Preparing your order details...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-16 max-w-2xl text-center">
