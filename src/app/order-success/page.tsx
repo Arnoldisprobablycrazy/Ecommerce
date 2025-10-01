@@ -26,7 +26,7 @@ export default function OrderSuccessPage() {
 
   const generateReceipt = () => {
     const receiptContent = `
-ZUKIH TRADERS - ORDER CONFIRMATION
+EASTERLY KITCHENS - ORDER CONFIRMATION
 ====================================
 
 Thank you for your order!
@@ -39,7 +39,7 @@ Your order has been received and is being processed.
 You can view detailed order information and download
 a complete receipt from your Orders page.
 
-Thank you for choosing Zukih Traders!
+Thank you for choosing Easterly Kitchens!
 ====================================
     `;
 

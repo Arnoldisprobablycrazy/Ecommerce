@@ -81,7 +81,7 @@ export default function OrdersPage() {
 
   const generateReceipt = (order: Order) => {
     const receiptContent = `
-ZUKIH TRADERS
+EASTERLY KITCHENS
 ================
 
 ORDER RECEIPT
@@ -125,8 +125,8 @@ Thank you for your order!
 
 Contact Information:
 -------------------
-Email: zukihtraders@gmail.com
-Phone: +254 722 8253 42
+Email: support@easterlykitchens.com
+Phone: +254 700 000 000
 
     `;
 
