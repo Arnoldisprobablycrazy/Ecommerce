@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     const password = Buffer.from(shortcode + passkey + timestamp).toString('base64');
 
     // Use your ngrok URL for the callback
-    const callbackURL = "https://delmy-brutelike-giovanni.ngrok-free.dev/api/mpesa/callback";
+    const callbackURL = "https://ecommerce-a2flyx7z7-arnoldisprobablycrazys-projects.vercel.app/checkout/api/mpesa/callback";
 
     const stkPayload = {
       BusinessShortCode: shortcode,
